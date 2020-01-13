@@ -31,14 +31,3 @@
     },
     "manifest_version": 2
   }
-
-
-
-
-
-
-  // "content_scripts": [
-  //   {
-  //     "js": ["content.js"]
-  //   }
-  // ]
