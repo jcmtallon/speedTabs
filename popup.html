@@ -2,16 +2,214 @@
 <html>
   <head>
     <style>
-      button {
-        height: 30px;
-        width: 30px;
+      
+      :root{
+        --border: #E7E8EA;
+        --black-text: #2a2a2a;
+        --label-text: #3f8ba2;
+        --hint-text:#4ca4ff;
+        --grey-background: #F7F9FA;
+        --input-text: #4c4c4c;
+        --input-placeholder: #c2c2c2;
+        --selected-result: #e8f0f3;
+        --hovered-result: #F7F9FA;
+
+      }
+
+      html{
+        width: 600px;
+      }
+
+      body{
+        margin: 4px 0px 0px;
+        font-size: 13px;
+        -webkit-font-smoothing: antialiased;
+        color:var(--black-text);
+      }
+
+      input:focus{
         outline: none;
       }
+
+      ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+        color: var(--input-placeholder);
+      }
+
+
+
+
+
+      /* Top section */
+
+      .top-section{
+        border-bottom: 1px solid var(--border);
+        padding: 0px 10px;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .top-section__title{
+        padding-left: 4px;
+        font-size: 11px;
+        margin-bottom: 2px;
+        color: var(--label-text);
+        user-select: none;
+      }
+
+      .top-section__title-inner{
+        animation: slide-right 0.4s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+        animation-fill-mode: forwards;
+      }
+
+      .top-section__hint{
+        text-align: right;
+        font-size: 11px;
+        margin-bottom: 2px;
+        user-select: none;
+        padding-right: 4px;
+        color: var(--hint-text);
+      }
+
+      .top-section__hint-inner{
+        animation: fadeIn ease 1s;
+        animation-fill-mode: forwards;
+      }
+
+      @keyframes fadeIn{
+        0% {opacity: 0;}
+        100% {opacity: 1;}
+      }
+
+      @keyframes slide-right {
+        0% {
+          transform: translateX(-70px);
+        }
+        100% {
+          transform: translateX(0px);
+        }
+      }
+
+
+
+
+
+
+      /* Search bar */
+
+      .search-bar-section{
+        background-color: var(--grey-background);
+        border-bottom: 1px solid var(--border);
+        padding: 8px;
+        box-sizing: border-box;
+      }
+
+      .search-input-container{
+        display: flex;
+      }
+
+      .search-icon{
+        width: 19px;
+        margin: 0px 8px 0px 3px;
+      }
+
+      .clickeable-icon{
+        cursor: pointer;
+        transform: scale(0.5);
+      }
+
+      .clickeable-icon:hover{
+        transform: scale(0.6);
+      }
+
+      .inputField{
+        background-color: var(--grey-background);
+        color: var(--input-text);
+        padding: 5px 4px 2px;
+        box-sizing: border-box;
+        border: none;
+      }
+
+      .searchBar{
+        width: 100%;
+      }
+
+
+
+
+
+
+
+      /* Result list */
+
+      ul{
+        list-style-type: none;
+        user-select: none;
+        padding-inline-start: 0px;
+        margin-block-start: 0px;
+        margin-block-end: 0px;
+      }
+
+      result-list{
+        widows: 100%;
+      }
+
+      .result__cointainer{
+        display: flex;
+        padding: 7px 10px 7px;
+        box-sizing: border-box;
+        cursor: pointer;
+      }
+
+      .result__cointainer:hover{
+        background-color: var(--hovered-result);
+      }
+
+      .result__cointainer[selected="true"] {
+        background-color: var(--selected-result);
+      }
+
+      .result__site-icon{
+        width: 13px;
+        margin: 0px 8px 0px 4px;
+        transform: translate(0px,2px);
+      }
+
+      .result__title{
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 0px 28px 0px 6px;
+      }
+      
+      .result__right-icon{
+        width: 12px;
+        margin-right: 6px;
+        opacity: 0.6;
+      }
+
     </style>
   </head>
+
+
   <body>
-    <button id="changeColor"></button>
+      <div class="top-section">
+        <div class="top-section__title" id="top-section__title"></div>   
+        <div class="top-section__hint" id="top-section__hint"></div>
+      </div>
+
+      <div class="search-bar-section">
+        <div class="search-input-container">
+          <img id="search-icon" class="search-icon" src="./icons/lupa.svg" alt="Search icon">
+          <input type="text" id="searchBar" class="inputField searchBar" placeholder="what are you looking for?">
+        </div>
+      </div>
+
+      <ul class="result-list" id="result-list"></ul>
+
     <script src="popup.js"></script>
   </body>
+
+
 </html>
 
