@@ -1,14 +1,14 @@
 {
-    "name": "Chrome Quick!",
-    "version": "1.0",
+    "name": "SpeedTabs",
+    "short_name": "SpeedTabs",
+    "version": "1.0.0.2",
     "options_page": "options.html",
     "description": "Search though open tabs, your bookmarks and the web faster!",
     "permissions": ["activeTab", "tabs", "bookmarks", "chrome://favicon/"],
     "icons": {
-      "16": "images/get_started16.png",
-      "32": "images/get_started32.png",
-      "48": "images/get_started48.png",
-      "128": "images/get_started128.png"
+      "32": "images/32.png",
+      "48": "images/48.png",
+      "128": "images/128.png"
     },
     "commands": {
       "_execute_browser_action": {
@@ -21,12 +21,12 @@
     },
     "browser_action": {
       "default_popup": "popup.html",
-      "default_title": "CromeQuick",
+      "default_title": "SpeedTabs",
       "default_icon": {
-        "16": "images/get_started16.png",
-        "32": "images/get_started32.png",
-        "48": "images/get_started48.png",
-        "128": "images/get_started128.png"
+        "16": "images/16.png",
+        "32": "images/32.png",
+        "48": "images/48.png",
+        "128": "images/128.png"
       }
     },
     "manifest_version": 2
