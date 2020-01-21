@@ -19,20 +19,7 @@ const searchBarLabel = document.getElementById('top-section__title');
 searchBar.focus();
 
 
-//TODO: rethink this method 
-function genNoResultsItem(){
-  return{
-    id: 0,
-    index: 0,
-    title: 'No items found.',
-    active: false,
-    favIconUrl: './icons/default.png',
-    url: '',
-    typeIconUrl: './icons/tab.svg',
-    type: 'noResutls',
-    actionQuery: null
-  }
-}
+
 
 
 ///////////////// DATA RETRIEVAL METHODS ///////////////////
@@ -55,11 +42,11 @@ function getOpenTabs (query) {
       index: tab.index,
       title: tab.title,
       active: tab.active,
-      favIconUrl: (tab.favIconUrl !== undefined) ? tab.favIconUrl : './icons/default.png',
+      favIconUrl: (tab.favIconUrl === '' || tab.favIconUrl === undefined) ? './icons/default.png' : tab.favIconUrl,
       url: tab.url,
       typeIconUrl: './icons/tab.svg',
       type: 'openTab',
-      actionQuery: tab.id
+      actionQuery: {tabId: tab.id, windowId: tab.windowId}
     }
   }
 
@@ -67,6 +54,8 @@ function getOpenTabs (query) {
     return new Promise((resolve, reject) => {
 
       chrome.tabs.query(options, function(tabs){
+        console.log(tabs);
+        
         let results = [];
 
         if(tabs){
@@ -86,7 +75,7 @@ function getOpenTabs (query) {
       });
     });
   }
-  return getChromeTabs({active: false});
+  return getChromeTabs({});
 }
 
 /**
@@ -150,6 +139,20 @@ function getBookMarks (query) {
   return extractBmsFromWholeTree();    
 }
 
+function searchOption(query){
+  return{
+    id: null,
+    index: null,
+    title: query,
+    active: false,
+    favIconUrl: './icons/lupa.svg',
+    url: '',
+    typeIconUrl: '',
+    type: 'search',
+    actionQuery: query
+  }
+}
+
 
 
 
@@ -175,14 +178,23 @@ function executeAction(query, type, ctrlKeyOn=false){
   switch (type) {
     case 'openTab':
       if (ctrlKeyOn) {
-        chrome.tabs.duplicate(parseInt(query), () => {});
+        chrome.tabs.duplicate(parseInt(query.tabId), () => {});
+        chrome.windows.update(parseInt(query.windowId), {focused: true}, () => {});
+        window.close();
       }else{
-        chrome.tabs.update(parseInt(query), {active: true}, () => {});   
+        chrome.tabs.update(parseInt(query.tabId), {active: true}, () => {});
+        chrome.windows.update(parseInt(query.windowId), {focused: true}, () => {});
+        window.close();
       }
       break;
 
-    case 'noResults':
-      
+    case 'search':
+      if (ctrlKeyOn) {
+        chrome.tabs.create({url: 'http://google.com/search?q=' + query, active: true});
+      }else{
+        chrome.tabs.update({url: 'http://google.com/search?q=' + query});
+        window.close();
+      }
       break;
 
     case 'bookmark':
@@ -192,7 +204,6 @@ function executeAction(query, type, ctrlKeyOn=false){
         chrome.tabs.update({url: query});
         window.close();
       }
-
       break;
   
     default:
@@ -205,11 +216,42 @@ function executeAction(query, type, ctrlKeyOn=false){
 
 ///////////////// RENDER METHODS ///////////////////
 
+function getTitleWithMatchHighlight(item, query){
+  
+  const title = item.title.trim();
+  const ciTitle = title.toLowerCase();
+  const ciQuery = query.toLowerCase();
+
+  const start = ciTitle.indexOf(ciQuery);
+  const end = start + ciQuery.length;
+
+  if (start < 0 || item.type==='search') return document.createTextNode(title);
+    
+  const firstPart = title.substring(0, start);
+  const middlePart = title.substring(start, end);
+  const lastPart = title.substring(end);
+
+  let firstNode = document.createTextNode(firstPart);
+  let lastNode = document.createTextNode(lastPart);
+
+  let hightlight = document.createElement('span');
+  hightlight.classList.add('result__highlight');
+  hightlight.textContent = middlePart;
+
+  let container = document.createElement('span');
+  container.appendChild(firstNode);
+  container.appendChild(hightlight);
+  container.appendChild(lastNode);
+
+  return container;
+}
+
 /**
  * Renders result list items based passed array of items.
- * @param {object[]} itemArr
+ * @param {object[]} itemArr - array of result objects
+ * @param {string} query - user input from search bar
  */
-function renderList(itemArr){
+function renderList(itemArr, query){
 
   list.innerHTML = '';
 
@@ -228,7 +270,16 @@ function renderList(itemArr){
 
     let title = document.createElement('div');
     title.classList.add('result__title');
-    title.textContent = item.title.trim();
+    title.appendChild(getTitleWithMatchHighlight(item, query));
+
+    let url = document.createElement('div');
+    url.classList.add('result__url');
+    url.textContent = (item.url!=='') ? `-  ${item.url}` : '';
+
+    let titleContainer = document.createElement('div');
+    titleContainer.classList.add('result__title-container');
+    titleContainer.appendChild(title);
+    titleContainer.appendChild(url);
     
     let rightIcon = document.createElement('img');
     rightIcon.classList.add('result__right-icon');
@@ -237,11 +288,11 @@ function renderList(itemArr){
     let listItem = document.createElement('li');
     listItem.classList.add('result__cointainer');
     listItem.setAttribute('selected', 'false');
-    listItem.setAttribute('query', item.actionQuery);
+    listItem.setAttribute('query', JSON.stringify(item.actionQuery));
     listItem.setAttribute('type', item.type);
 
     listItem.appendChild(leftIcon);
-    listItem.appendChild(title);
+    listItem.appendChild(titleContainer);
     listItem.appendChild(rightIcon);
 
     listItem.addEventListener('click', function(){
@@ -427,14 +478,11 @@ async function executeQuery (query) {
     results = results.concat(bms);
   }
 
-  // If tabs + bookmarks < 6, get google search. 
+  // Can I simulate quick search? TODO: Investigar
 
-  // Can I simulate quick search? 
-  // Investigar
+  if(results.length < maxResults) results.push(searchOption(query));
 
-  if(results.length === 0) results.push(genNoResultsItem());
-
-  renderList(results);
+  renderList(results, query);
   resetSelIndex();
   highlightSelection();
   refreshTopBar();
@@ -475,7 +523,7 @@ document.addEventListener('keydown', (event) => {
     
     case 'Enter':
       event.preventDefault();
-      const query = list.childNodes[sel_index].getAttribute('query');
+      const query = JSON.parse(list.childNodes[sel_index].getAttribute('query'));
       const type = list.childNodes[sel_index].getAttribute('type');
       executeAction(query, type, event.ctrlKey);
 
