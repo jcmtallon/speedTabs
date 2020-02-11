@@ -1,10 +1,10 @@
 {
     "name": "SpeedTabs",
     "short_name": "SpeedTabs",
-    "version": "1.0.0.2",
+    "version": "1.0.0.3",
     "options_page": "options.html",
     "description": "Search though open tabs, your bookmarks and the web faster!",
-    "permissions": ["activeTab", "tabs", "bookmarks", "chrome://favicon/"],
+    "permissions": ["activeTab", "tabs", "bookmarks", "chrome://favicon/", "storage", "history"],
     "icons": {
       "32": "images/32.png",
       "48": "images/48.png",
@@ -15,7 +15,7 @@
         "description": "Open search popup.",
         "suggested_key": {
           "default": "Ctrl+Q",
-          "mac": "MacCtrl+Q"
+          "mac": "Command+J"
         }
       }
     },
