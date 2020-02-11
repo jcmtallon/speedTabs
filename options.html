@@ -1,22 +1,355 @@
 <!DOCTYPE html>
 <html>
   <head>
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+
     <style>
-      button {
-        height: 30px;
-        width: 30px;
-        outline: none;
-        margin: 10px;
+
+      :root{
+        --background:  #e8f0f3 ;
+        --background-secondary: white;
+        --text-primary: #2a2a2a;
+        --text-title: #476a99;
+        --border: #E7E8EA;
+        --border-light: rgb(242, 244, 247);
+        --toogle-off: rgb(196, 195, 195);
+        --toogle-off__shadow: rgba(196, 195, 195, 0.5);
+        --toggle-primary: #7696c0;
+        --toggle-primary__shadow: rgba(118, 150, 192,0.5);
+        --toggle-primary-light: #d5deeb;
+        --shadow__regular: rgb(204, 204, 204);
+        --select__active: #ecf4fc;
+        --select__hover: #ecf4fc;
       }
+
+      [data-theme="dark"] {
+        --background: rgb(40,41,44);
+        --background-secondary: rgb(53,54,58);
+        --text-title: #ffffff;
+        --text-primary: rgb(189, 193, 198);
+        --border: rgb(32,33,36);
+        --toogle-off: rgb(40,41,44);
+        --toogle-off__shadow: rgba(40,41,44,0.5);
+        --toggle-primary: #7696c0;
+        --toggle-primary__shadow: rgba(118, 150, 192,0.5);
+        --shadow__regular: rgb(22, 22, 23);
+        --select__active: rgb(69, 70, 75);
+        --select__hover: rgb(69, 70, 75);
+      }
+
+      html{
+        background-color: var(--background);
+        -webkit-font-smoothing: antialiased;
+        color: var(--text-primary);
+      }
+
+      .option-box{
+        background-color: var(--background-secondary);
+        border-radius: 30px;
+        margin: 40px auto;
+        border: 1px solid var(--border);
+        min-width: 500px;
+        max-width: 550px;
+      }
+
+      .title__section{
+        display: flex;
+        justify-content: center;
+        margin: 22px 0px;
+      }
+
+      .title__container{
+        display: flex;
+        color: var(--text-title);
+      }
+
+
+      .title__icon{
+        width: 40px;
+        margin: 0px 15px 0px 0px;
+        margin-block-start: 0.97em;
+        margin-block-end: 0.67em;
+      }
+
+      .title__h1{
+        user-select: none;
+      }
+
+      .title__li{
+        padding: 33px 0px 0px 10px;
+        font-size: 18px;
+        color: var(--text-title);
+        user-select: none;
+      }
+
+      .options__list{
+        list-style-type: none;
+        padding-inline-start: 0px;
+        padding: 0px 40px 30px 20px;
+        border-top: 1px solid var(--border);
+        font-family: 'Roboto', sans-serif;
+      }
+
+      .options__li{
+        display: flex;
+        justify-content: space-between;
+        padding: 20px 20px 30px 30px;
+        align-items: center;
+      }
+
+      .option__description{
+        font-size: 15px;
+        user-select: none;
+        text-transform: capitalize;
+        color: var(--text-title);
+      }
+
+      .toggle{
+        position: relative;
+        display: block;
+        width: 40px;
+        height: 20px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transform: translate3d(0,0,0);
+      }
+
+      .toggle:before{
+        content: "";
+        position: relative;
+        top: 3px;
+        left: 3px;
+        width: 34px;
+        height: 14px;
+        display: block;
+        background: var(--toogle-off);
+        border-radius: 8px;
+        transition: background .2s ease;
+      }
+
+      .toggle span{
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 20px;
+        height: 20px;
+        display: block;
+        background: var(--background-secondary);
+        border-radius: 10px;
+        box-shadow: 0 3px 8px var(--toogle-off__shadow);
+        transition: all .2s ease;
+      }
+
+      .toggle span:before{
+        content: "";
+        position: absolute;
+        display: block;
+        margin: -18px;
+        width: 56px;
+        height: 56px;
+        background: var(--toggle-primary);
+        border-radius: 50%;
+        transform: scale(0);
+        opacity: 1;
+        pointer-events: none;
+      }
+
+      .options__toggle:checked + .toggle:before{
+        background: var(--toggle-primary-light);
+      }
+
+      .options__toggle:checked + .toggle span{
+        background: var(--toggle-primary);
+        transform: translateX(20px);
+        transition: all .2s cubic-bezier(.8,.4,.3,1.25), background .15s ease;
+        box-shadow: 0 3px 8px var(--toggle-primary__shadow);
+      }
+
+      .options__toggle:checked + .toggle span:before{
+        transform: scale(1);
+        opacity: 0;
+        transition: all .4s ease;
+      }
+
+      #opt__resNb{
+        width: 50px;
+        outline: 0;
+        text-align: center;
+      }
+
+
+      /*Styling Selectbox*/
+      .select__dropdown {
+        display: inline-block;
+        background-color: var(--background-secondary);
+        border-radius: 5px;
+        box-shadow: 0 0 2px var(--shadow__regular);
+        transition: all .2s ease;
+        position: relative;
+        font-size: 14px;
+        color: var(--text-primary);
+        height: 100%;
+        text-align: left;
+        user-select: none;
+      }
+
+      .select__dropdown .select {
+          cursor: pointer;
+          display: block;
+          padding: 10px
+      }
+      .select__dropdown .select > i {
+          font-size: 13px;
+          color: #888;
+          cursor: pointer;
+          transition: all .3s ease-in-out;
+          float: right;
+          line-height: 20px
+      }
+      .select__dropdown:hover {
+          box-shadow: 0 0 4px var(--shadow__regular);
+      }
+      .select__dropdown:active {
+          background-color: var(--select__active);
+      }
+      .select__dropdown.active:hover,
+      .select__dropdown.active {
+          box-shadow: 0 0 4px var(--shadow__regular);
+          border-radius: 5px 5px 0 0;
+          background-color: var(--select__active);
+      }
+      .select__dropdown.active .select > i {
+          transform: rotate(-90deg)
+      }
+      .select__dropdown .dropdown-menu {
+          position: absolute;
+          background-color: var(--background-secondary);
+          width: 100%;
+          left: 0;
+          margin-top: 1px;
+          box-shadow: 0 1px 2px var(--shadow__regular);
+          border-radius: 0 1px 5px 5px;
+          overflow: auto;
+          display: none;
+          max-height: 220px;
+          overflow-y: auto;
+          z-index: 9
+      }
+      .select__dropdown .dropdown-menu::-webkit-scrollbar {
+          width: 4px;
+      }
+      .select__dropdown .dropdown-menu::-webkit-scrollbar-thumb {
+          background: var(--background);
+      }
+
+      .select__dropdown .dropdown-menu li {
+          padding: 10px;
+          transition: all .2s ease-in-out;
+          cursor: pointer
+      } 
+      .select__dropdown .dropdown-menu {
+          padding: 0;
+          list-style: none;
+      }
+      .select__dropdown .dropdown-menu li:hover {
+          background-color: var(--select__hover);
+      }
+      .select__dropdown .dropdown-menu li:active {
+          background-color: var(--select__hover);
+      }
+
     </style>
   </head>
+  
+  
   <body>
-    <div id="buttonDiv">
-    </div>
-    <div>
-      <p>Choose a different background color!</p>
+    <div class="option-box">
+
+      <!-- title -->
+      <div class="title__section">
+        <div class="title__container">
+          <div class="title__icon-container">
+            <img class="title__icon" src="./images/128.png">
+          </div>
+          <h1 class="title__h1">SpeedTabs Settings</h1>
+        </div>
+      </div>
+  
+      <!-- options -->
+      <div class="options__section">
+        <ul class="options__list">
+          
+          <!-- dark theme -->
+          <li class="title__li">Appearance</li>
+           <li class="options__li" style="padding-top:30px">
+            <div class="option__description">Dark theme</div>
+            <div class="option__controlContainer">
+              <input type="checkbox" class="options__toggle" id="opt__darkTheme" style="display:none"/>
+              <label for="opt__darkTheme" class="toggle"><span></span></label>
+            </div>
+          </li>
+          
+          <!-- number of items -->
+          <li class="title__li">General</li>
+          <li class="options__li">
+            <div class="option__description">Number of results</div>
+            <div class="option__controlContainer">
+              <div class="select__dropdown" id="opt__resNb">
+                <div class="select">
+                  <span id="opt__resNbSpan">7</span>
+                </div>
+                <ul class="dropdown-menu">
+                  <li id="nbOfResults_4">4</li>
+                  <li id="nbOfResults_5">5</li>
+                  <li id="nbOfResults_6">6</li>
+                  <li id="nbOfResults_7">7</li>
+                  <li id="nbOfResults_8">8</li>
+                  <li id="nbOfResults_9">9</li>
+                  <li id="nbOfResults_10">10</li>
+                  <li id="nbOfResults_11">11</li>
+                  <li id="nbOfResults_12">12</li>
+                  <li id="nbOfResults_13">13</li>
+                  <li id="nbOfResults_14">14</li>
+                  <li id="nbOfResults_15">15</li>
+                  <li id="nbOfResults_16">16</li>
+                  <li id="nbOfResults_17">17</li>
+                  <li id="nbOfResults_18">18</li>
+                  <li id="nbOfResults_19">19</li>
+                  <li id="nbOfResults_20">20</li>
+                  <li id="nbOfResults_21">21</li>
+                  <li id="nbOfResults_22">22</li>
+                  <li id="nbOfResults_23">23</li>
+                  <li id="nbOfResults_24">24</li>
+                  <li id="nbOfResults_25">25</li>
+                  <li id="nbOfResults_26">26</li>
+                  <li id="nbOfResults_27">27</li>
+                  <li id="nbOfResults_28">28</li>
+                  <li id="nbOfResults_29">29</li>
+                  <li id="nbOfResults_30">30</li>
+                  <li id="nbOfResults_31">31</li>
+                  <li id="nbOfResults_32">32</li>
+                  <li id="nbOfResults_33">33</li>
+                  <li id="nbOfResults_34">34</li>
+                  <li id="nbOfResults_35">35</li>
+                  <li id="nbOfResults_36">36</li>
+                  <li id="nbOfResults_37">37</li>
+                  <li id="nbOfResults_38">38</li>
+                  <li id="nbOfResults_39">39</li>
+                  <li id="nbOfResults_40">40</li>
+                </ul>
+              </div>
+            </div>
+
+          </li>
+          
+
+        </ul>
+      </div>
+
     </div>
   </body>
+
   <script src="options.js"></script>
 </html>
 
