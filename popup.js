@@ -1,6 +1,5 @@
 // Result list max number of results.
-// TODO: setteable from Options / or popup.
-const maxResults = 7;
+let maxResults = 7;
 
 // Remembers selected result index. 
 let sel_index = 0;
@@ -14,6 +13,7 @@ const list = document.getElementById('result-list');
 const searchIcon = document.getElementById('search-icon');
 const hintLabel = document.getElementById('top-section__hint');
 const searchBarLabel = document.getElementById('top-section__title');
+const optionIcon = document.getElementById('options-icon');
 
 // Search bar is focused when the popup appears.
 searchBar.focus();
@@ -54,8 +54,7 @@ function getOpenTabs (query) {
     return new Promise((resolve, reject) => {
 
       chrome.tabs.query(options, function(tabs){
-        console.log(tabs);
-        
+
         let results = [];
 
         if(tabs){
@@ -82,7 +81,7 @@ function getOpenTabs (query) {
  * Returns bookmarks stored in Chrome which url or title match agains 
  * the passed query string. 
  * If query string is empty, returns all bookmarks. 
- * @param {*} query
+ * @param {string} query
  * @returns {Object[]}
  */
 function getBookMarks (query) {
@@ -139,6 +138,13 @@ function getBookMarks (query) {
   return extractBmsFromWholeTree();    
 }
 
+
+/**
+ * Returns a search type result object with the same title as 
+ * the input from the search box, and a lupa icon. 
+ * @param {string} query
+ * @returns {Object[]}
+ */
 function searchOption(query){
   return{
     id: null,
@@ -151,6 +157,58 @@ function searchOption(query){
     type: 'search',
     actionQuery: query
   }
+}
+
+
+function getHistory(query){
+
+  const ciQuery = query.toLowerCase();
+
+  function parseEntry (entry) {
+    return{
+      id: entry.id,
+      index: 0,
+      title: entry.title,
+      active: false,
+      favIconUrl: 'chrome://favicon/' + entry.url,
+      url: entry.url,
+      typeIconUrl: './icons/bookmark.svg', //TODO: get icon for history entry (clock)
+      type: 'bookmark', //TODO: add a new type
+      actionQuery: entry.url //TODO: define actionQuery
+    }
+  }
+
+  function extractHistory(){
+    return new Promise((resolve, reject) => {
+
+      let params = {
+        text: ciQuery,
+        maxResults: 10
+      }
+
+      chrome.history.search(params,(entries) => { 
+        if(entries){
+
+          let results = [];
+
+          entries.forEach(function(entry){
+            const ciTitle = entry.title.toLowerCase();
+            const ciUrl = entry.url.toLowerCase();
+            if((ciQuery==='' || ciTitle.includes(ciQuery) || ciUrl.includes(ciQuery))){
+              results.push(parseEntry(entry));
+            }
+          });
+          resolve(results);
+        
+        }else{
+          console.log(`Can't get history!`)
+          reject(0);
+        }
+      });
+    });
+  }
+
+  return extractHistory();    
 }
 
 
@@ -173,14 +231,25 @@ function searchOption(query){
  * @param {string} type
  * @param {boolean} ctrlKeyOn
  */
-function executeAction(query, type, ctrlKeyOn=false){
+function executeAction(query, type, ctrlKeyOn=false, alkKeyOn=false){
 
   switch (type) {
+
     case 'openTab':
-      if (ctrlKeyOn) {
+
+      //Splits specified tab to the right.
+      if (ctrlKeyOn & alkKeyOn){
+        resizeCurrentWindowToTheLeft();
+        moveTabToRight(query.tabId);
+        window.close();
+
+      //Duplicates specified tab.
+      }else if (ctrlKeyOn) {
         chrome.tabs.duplicate(parseInt(query.tabId), () => {});
         chrome.windows.update(parseInt(query.windowId), {focused: true}, () => {});
         window.close();
+
+      //Activates specified tab
       }else{
         chrome.tabs.update(parseInt(query.tabId), {active: true}, () => {});
         chrome.windows.update(parseInt(query.windowId), {focused: true}, () => {});
@@ -188,27 +257,102 @@ function executeAction(query, type, ctrlKeyOn=false){
       }
       break;
 
+
+
     case 'search':
-      if (ctrlKeyOn) {
+
+      //Splits new window to the right and searches specified text.
+      if (ctrlKeyOn & alkKeyOn){
+        resizeCurrentWindowToTheLeft();
+        moveTabToRight(undefined, 'http://google.com/search?q=' + query);
+        window.close();
+
+      //Searches specified text in a new tab.
+      }else if (ctrlKeyOn) {
         chrome.tabs.create({url: 'http://google.com/search?q=' + query, active: true});
+
+
+      //Searches specified text in current tab.
       }else{
         chrome.tabs.update({url: 'http://google.com/search?q=' + query});
         window.close();
       }
+
       break;
 
     case 'bookmark':
-      if (ctrlKeyOn) {
+
+      //Split specified bookmark to the right
+      if (ctrlKeyOn & alkKeyOn){
+        resizeCurrentWindowToTheLeft();
+        moveTabToRight(undefined, query);
+        window.close();
+
+      //Opens specified bookmark in a different page
+      }else if (ctrlKeyOn) {
         chrome.tabs.create({url: query, active: true});
+
+      //Opens specified bookmark in current tab.
       }else{
         chrome.tabs.update({url: query});
         window.close();
       }
       break;
+
+      //TODO: add case history entry
   
     default:
       break;
   }
+}
+
+
+/**
+ * Resizes current window size and position so it
+ * fits the left side of the screen. 
+ */
+function resizeCurrentWindowToTheLeft () {
+
+  chrome.windows.getCurrent({}, (currentWin) => {
+
+    const params = {
+      left: screen.availLeft,
+      top: screen.availTop,
+      width: screen.availWidth/2,
+      height: screen.availHeight,
+      state: 'normal',
+      focused: false
+    }
+
+    chrome.windows.update(currentWin.id, params, (res)=>{
+    })
+  })
+}
+
+/**
+ * Creates new window that fits the right side of the screen 
+ * and moves the indicated tab into it. 
+ * @param {number} tabId
+ */
+function moveTabToRight(tabId, url){
+
+  const params = {
+    left: screen.availLeft + (screen.availWidth/2),
+    top: screen.availTop,
+    width: screen.availWidth/2,
+    height: screen.availHeight,
+    state: 'normal',
+    focused: true
+  }
+
+  if(tabId!==undefined) params.tabId = tabId;
+  if(url!==undefined){params.url = url};
+
+  chrome.windows.create(params, (res)=>{
+    if (url!=undefined) {
+        chrome.tabs.update(parseInt(res.tabs[0].id), {active: true}, () => {});
+    }
+  });
 }
 
 
@@ -366,9 +510,18 @@ function updateSearchIcon(){
  */
 function refreshTopBar(){
 
-  const type = list.childNodes[sel_index].getAttribute('type');
+  function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  let type = list.childNodes[sel_index].getAttribute('type');
 
   if(type===lastType) return;
+
+  const os = navigator.platform;
+  const specialKey1 = (os.substring(0,3)=='Mac') ? 'command' : 'ctrl';
   
   let hint = document.createElement('div');
   hint.classList.add('top-section__hint-inner');
@@ -376,24 +529,47 @@ function refreshTopBar(){
   let label = document.createElement('div');
   label.classList.add('top-section__title-inner');
 
+  let stack;
+
   switch (type) {
     case 'openTab':
       label.textContent = 'activate tab';
-      hint.textContent = 'duplicate (ctrl + enter)';
+      stack = [
+        `duplicate (${specialKey1} + enter)`,
+        `show in right side (${specialKey1} + alt + enter)`
+      ];
       break;
 
     case 'bookmark':
-      label.textContent = 'open bookmark'
-      hint.textContent = 'open in new tab (ctrl + enter)';
+      label.textContent = 'open bookmark';
+      stack = [
+        `open in new tab (${specialKey1} + enter)`,
+        `open in right side (${specialKey1} + alt + enter)`,
+      ]
       break;
     
     case 'search':
-      label.textContent = 'search'
-      hint.textContent = 'open in new tab (ctrl + enter)';
+      label.textContent = 'search';
+      stack = [
+        `search in new tab (${specialKey1} + enter)`,
+        `search in right side (${specialKey1} + alt + enter)`,
+      ]
+
+    //TODO: add case history entry
   
     default:
       break;
   }
+
+  let index = getRandomInt(0, stack.length-1);
+  hint.textContent = stack[index];
+
+  let randomlyTrue = Math.random() >= 0.6;
+  if(searchBar.value==='' & randomlyTrue){
+    hint.textContent = 'show active tab in right side (TAB key)';
+    type ='emptySearch';
+  };
+
   if(hintLabel.childNodes.length > 0) hintLabel.innerHTML = '';
   if(searchBarLabel.childNodes.length > 0) searchBarLabel.innerHTML = '';
 
@@ -478,6 +654,13 @@ async function executeQuery (query) {
     results = results.concat(bms);
   }
 
+  if (results.length < maxResults){
+    let hist = await getHistory(query);
+    results = results.concat(hist);
+  }
+
+  //TODO: remove duplicates (for example: open Tab bookmark and history same item).
+
   // Can I simulate quick search? TODO: Investigar
 
   if(results.length < maxResults) results.push(searchOption(query));
@@ -506,6 +689,7 @@ searchBar.addEventListener('input', function(){
 // Arrow up-down moves result selector.
 // ENTER executes item action. 
 document.addEventListener('keydown', (event) => {
+
   switch (event.code) {
     case 'ArrowDown':
       event.preventDefault();
@@ -525,15 +709,40 @@ document.addEventListener('keydown', (event) => {
       event.preventDefault();
       const query = JSON.parse(list.childNodes[sel_index].getAttribute('query'));
       const type = list.childNodes[sel_index].getAttribute('type');
-      executeAction(query, type, event.ctrlKey);
+      const controlWasClicked = (event.ctrlKey || event.metaKey) ? true : false;
+      executeAction(query, type, controlWasClicked, event.altKey);
+      break; 
+    
+    case 'Tab':
+      if (searchBar.value ===''){
+        event.preventDefault();
+        chrome.tabs.query({ active: true, currentWindow: true }, (res)=>{
+          const query = {tabId: res[0].id};
+          executeAction(query, 'openTab', true, true);
+        });
+      }
+      break;
+
 
       default:      
   }
 });
 
+
+// Gear icon opens option page in a different tab.
+optionIcon.addEventListener('click', (event) => {
+  chrome.tabs.create({'url': "/options.html" } )
+});
+
+
 //Execute initial search 
-//right after opening popup.
-executeQuery(searchBar.value);
+//right after opening popup
+//and applying the user settings.
+chrome.storage.sync.get(['nbOfResults'], function(result) {
+  if (result.hasOwnProperty('nbOfResults')) maxResults = result.nbOfResults;
+  executeQuery(searchBar.value);
+}); 
+
 
 
 
