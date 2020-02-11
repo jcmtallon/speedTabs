@@ -4,6 +4,7 @@
     <style>
       
       :root{
+        --background: white;
         --border: #E7E8EA;
         --black-text: #2a2a2a;
         --label-text: #3f8ba2;
@@ -16,11 +17,28 @@
         --title-highlight-text: #3651da;
         --selected-result: #e8f0f3;
         --hovered-result: #F7F9FA;
-
       }
+
+      [data-theme="dark"] {
+        --background: rgb(53,54,58);
+        --border: rgb(32,33,36);
+        --black-text: rgb(189, 193, 198);
+        --label-text: #3f8ba2;
+        --hint-text:#4ca4ff;
+        --grey-background: rgb(40,41,44);
+        --input-text: #c2c2c2;
+        --input-placeholder: #4c4c4c;
+        --url-text: rgb(53,54,58);
+        --url-text-selected: #498099;
+        --title-highlight-text: #da9836;
+        --selected-result: rgb(63, 64, 70);
+        --hovered-result: rgb(69, 70, 73);
+      }
+
 
       html{
         width: 600px;
+        
       }
 
       body{
@@ -28,7 +46,17 @@
         font-size: 13px;
         -webkit-font-smoothing: antialiased;
         color:var(--black-text);
-        border-bottom: 3px solid white;
+        border-bottom: 3px solid var(--background);
+        background-color: var(--background);
+        overflow-y: overlay;
+      }
+
+      body::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      body::-webkit-scrollbar-thumb {
+        background: var(--grey-background);
       }
 
       input:focus{
@@ -65,6 +93,10 @@
         animation-fill-mode: forwards;
       }
 
+      .top-section__hint-option-container{
+        display: flex; 
+      }
+
       .top-section__hint{
         text-align: right;
         font-size: 11px;
@@ -77,6 +109,12 @@
       .top-section__hint-inner{
         animation: fadeIn ease 1s;
         animation-fill-mode: forwards;
+      }
+
+      .options-icon{
+        width: 10px;
+        margin: 0px 0px 1px 5px;
+        cursor: pointer;
       }
 
       @keyframes fadeIn{
@@ -192,7 +230,7 @@
       }
 
       .result__highlight{
-
+        color: var(--title-highlight-text);
       }
 
       .result__url{
@@ -215,8 +253,11 @@
 
   <body>
       <div class="top-section">
-        <div class="top-section__title" id="top-section__title"></div>   
-        <div class="top-section__hint" id="top-section__hint"></div>
+        <div class="top-section__title" id="top-section__title"></div>
+        <div class="top-section__hint-option-container">
+          <div class="top-section__hint" id="top-section__hint"></div>
+          <div><img id="options-icon" class="options-icon" src="./icons/options.svg" alt="Options icon"></div>
+        </div>
       </div>
 
       <div class="search-bar-section">
@@ -227,8 +268,9 @@
       </div>
 
       <ul class="result-list" id="result-list"></ul>
-
-    <script src="popup.js"></script>
+    
+      <script src="popup.js"></script>
+      <script src="themeCheck.js"></script>
   </body>
 
 
